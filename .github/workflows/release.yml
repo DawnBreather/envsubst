@@ -1,0 +1,139 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.21.0
+
+      - name: Build
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o envmake.linux.amd64 ./envmake/main.go
+          GOOS=linux GOARCH=arm64 go build -o envmake.linux.arm64 ./envmake/main.go
+          
+          GOOS=linux GOARCH=amd64 go build -o envsubst.linux.amd64 ./envsubst/main.go
+          GOOS=linux GOARCH=arm64 go build -o envsubst.linux.arm64 ./envsubst/main.go
+          
+          GOOS=linux GOARCH=amd64 go build -o set2secret.linux.amd64 ./set2secret/main.go
+          GOOS=linux GOARCH=arm64 go build -o set2secret.linux.arm64 ./set2secret/main.go
+          
+          GOOS=linux GOARCH=amd64 go build -o setsubst.linux.amd64 ./setsubst/main.go
+          GOOS=linux GOARCH=arm64 go build -o setsubst.linux.arm64 ./setsubst/main.go
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Extract tag name
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - name: Build Docker image
+        run: |
+          docker build -t dawnbreather/envsubst:${{ steps.get_version.outputs.VERSION }} -f .devops/Dockerfile .
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push dawnbreather/envsubst:${{ steps.get_version.outputs.VERSION }}
+
+      - name: Upload Release Asset (linux/amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./envmake.linux.amd64
+          asset_name: envmake.linux.amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (linux/arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./envmake.linux.arm64
+          asset_name: envmake.linux.arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (linux/amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./envsubst.linux.amd64
+          asset_name: envsubst.linux.amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (linux/arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./envsubst.linux.arm64
+          asset_name: envsubst.linux.arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (linux/amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./set2secret.linux.amd64
+          asset_name: set2secret.linux.amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (linux/arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./set2secret.linux.arm64
+          asset_name: set2secret.linux.arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (linux/amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./setsubst.linux.amd64
+          asset_name: setsubst.linux.amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (linux/arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./setsubst.linux.arm64
+          asset_name: setsubst.linux.arm64
+          asset_content_type: application/octet-stream
