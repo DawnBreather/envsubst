@@ -13,4 +13,4 @@ FROM debian
 COPY --from=build /out/envmake /usr/bin
 COPY --from=build /out/envsubst /usr/bin
 COPY --from=build /out/set2secret /usr/bin
-COPY --from=build /out/set2subst /usr/bin
+COPY --from=build /out/setsubst /usr/bin
