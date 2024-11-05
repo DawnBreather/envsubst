@@ -61,10 +61,12 @@ The `setsubst` application focuses on substituting environment variable placehol
 To execute the `setsubst` application, use the following command structure:
 
 ```shell
-setsubst -s [variable_set_name ...]
+setsubst -s [variable_set_name ...] -p [prefix] -x [suffix] [path_to_file_or_directory ...]
 ```
 Where:
 * **-s, --set**: Specifies the name(s) of the variable set(s) to extract from the environment.
+* **-p, --prefix**: Placeholder prefix. Default is "{{".
+* **-x, --suffix**: Placeholder suffix. Default is "}}".
 <p></p>
 After the set name(s), provide the paths to the target files or directories as positional arguments.
 
