@@ -8,20 +8,41 @@ The `envsubst` application is designed to replace placeholders in files with the
 4. Processes both individual files and entire directories, replacing placeholders recursively in all files found in a directory.
 5. Provides logging to trace the progress of the replacements.
 
-## Usage
+#### Usage
 The application provides various command-line options to customize its behavior:
 
 * **-p, --prefix**: Placeholder prefix. Default is "{{".
-* **-s, --suffix**: Placeholder suffix. Default is "}}".
+* **-x, --suffix**: Placeholder suffix. Default is "}}".
 * **-m, --regex-mask**: Placeholder regex mask. This defines the pattern that the content of the placeholder should match. Default is "[A-Z_0-9]*".
 * **-e, --env-file**: Source of environment variables. If specified, the application will attempt to read and set environment variables from this file.
-
-### Example:
+* **-s, --set**: Specifies the name(s) of the variable set(s) to extract from the environment
 
 ```shell
-cicd_envsubst -p "{{" -s "}}" -m "[A-Z_0-9]*" -e "path/to/env/file" path/to/file_or_directory
+envsubst -s [variable_set_name ...] -p [prefix] -x [suffix] -m [regexp_mask] [path_to_file_or_directory ...]
 ```
-This command will process `path/to/file_or_directory`, replacing placeholders that match the default format with corresponding environment variables. It will also read environment variables from `path/to/env/file` and use them for replacements.
+
+##### Example:
+```shell
+export SET1="
+VARIABLE1: THIS is a value for VARIABLE1
+VARIABLE2: |
+  This is a value
+  for VARIABLE2"
+
+export SET2="
+VARIABLE3: THIS is a value for VARIABLE3
+VARIABLE4: |
+  This is a value
+  for VARIABLE4"
+
+envsubst -s SET1 -s SET2 -p "{{" -x "}}" -m "[A-Z_0-9]*" -e "path/to/env/file" path/to/file_or_directory another/to/file_or_directory
+```
+This command will:
+1. Extract variables from the env file `path/to/env/file`.
+2. Extract variables from the environment based on the sets `SET1` and `SET2`.
+3. Extract all environment variables from the environment.
+4. Merge all the extracted variables (lowest priority to highest priority: env file, sets, environment).
+5. Substitute placeholders within `path/to/file_or_directory` recursively.
 
 ### Environment File Format
 If you choose to use an external file to define environment variables (-e option), the expected format is:

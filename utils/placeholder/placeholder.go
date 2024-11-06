@@ -3,6 +3,7 @@ package placeholder
 import (
 	"cicd_envsubst/utils/env_var"
 	"cicd_envsubst/utils/logger"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -37,6 +38,8 @@ func (p *Placeholder) SetCoreRegexpMask(coreRegexpMask string) *Placeholder {
 	return p
 }
 func (p *Placeholder) SetVarsSet(varsSet map[string]string) *Placeholder {
+	// fmt.Println("Reporting varsSet")
+	// fmt.Println(varsSet)
 	p.varsSet = varsSet
 	return p
 }
@@ -51,12 +54,27 @@ func (p *Placeholder) GetCoreRegexpMask() string {
 }
 
 func (p *Placeholder) getRegexPattern() *regexp.Regexp {
-	regexMask := p.prefix + p.coreRegexMask + p.suffix
-	pattern, err := regexp.Compile(regexMask)
+	regexMask := ""
+	var pattern *regexp.Regexp
+	var err error
+
+	if p.prefix != "" && p.suffix != "" {
+		regexMask = p.prefix + p.coreRegexMask + p.suffix
+	} else {
+		// fmt.Println("Reporting varNames")
+		for varName, _ := range p.varsSet {
+			// fmt.Printf("%s: %s\n", varName, p.varsSet[varName])
+			if len(varName) > 1 {
+				regexMask += varName + "|"
+			}
+		}
+		regexMask = strings.TrimSuffix(regexMask, "|")
+	}
+	pattern, err = regexp.Compile(regexMask)
 	if err != nil {
 		_logger.Errorf("Unable to compile regexp mask '%s': %v", regexMask, err)
 	}
-
+	// _logger.Infof("Compiled regexp mask: %s", regexMask)
 	return pattern
 }
 
@@ -107,6 +125,7 @@ func (p *Placeholder) ReplacePlaceholdersWithVarsSet(baseString string) string {
 
 		if value, ok := p.varsSet[varName]; ok {
 			res = strings.ReplaceAll(res, match, value)
+			fmt.Printf(" -> Replacing { %s }\n", match)
 		} else {
 			_logger.Warnf("Variable not found: { %s }", varName)
 		}
